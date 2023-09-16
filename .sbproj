@@ -13,7 +13,6 @@
   "CodePath": "code",
   "PackageReferences": [
     "local.base",
-    "sandmod.interaction",
     "sandmod.core"
   ],
   "EditorReferences": null,
