@@ -13,6 +13,8 @@
 
 <<template_todo>> // Add description
 
+Work in progress, so things might change drastically.
+
 ## The library
 
 <<template_todo>> // Add explanation
