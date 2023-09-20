@@ -1,26 +1,33 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Sandbox;
 using Sandbox.Diagnostics;
 using Sandmod.Core.Logger;
 using Sandmod.Core.Provider;
+using Sandmod.Inventory.Container;
 using Sandmod.Inventory.Item;
 using Sandmod.Inventory.Item.Asset;
+using Sandmod.Inventory.Item.Context;
+using Sandmod.Inventory.Item.Verify;
 using Sandmod.Inventory.Provider;
 
 namespace Sandmod.Inventory;
 
-public static class InventorySystem
+public static partial class InventorySystem
 {
     internal static readonly Logger Log = new SandmodLogger("Inventory");
 
-    private static List<IItemAssetProvider> _assetProviders;
-    private static List<IItemAssetModifier> _assetModifiers;
-    private static List<IItemAsset> _assets;
+    private static List<IItemAssetProvider> _assetProviders = new();
+    private static List<IItemAssetModifier> _assetModifiers = new();
+    private static List<IItemAssetFilter> _assetFilters = new();
+    private static List<IItemAsset> _assets = new();
 
     public static IReadOnlyCollection<IItemAsset> Assets => _assets.AsReadOnly();
 
-    private static IItemProvider _itemProvider;
+    private static IItemContextProvider _itemContextProvider;
+
+    private static IItemContainerProvider _itemContainerProvider;
 
     [GameEvent.Entity.PostSpawn]
     [Event.Hotload]
@@ -28,22 +35,40 @@ public static class InventorySystem
     {
         _assetProviders = new List<IItemAssetProvider>(ProviderFactory.Provide<IItemAssetProvider>());
         _assetModifiers = new List<IItemAssetModifier>(ProviderFactory.Provide<IItemAssetModifier>());
-        if (Game.IsServer)
-        {
-            _itemProvider = ProviderFactory.ProvideSingle<IItemProvider>();
-        }
+        _assetFilters = new List<IItemAssetFilter>(ProviderFactory.Provide<IItemAssetFilter>());
+
+        _itemContextProvider = ProviderFactory.ProvideSingle<IItemContextProvider>();
+
+        _itemContainerProvider = ProviderFactory.ProvideSingle<IItemContainerProvider>();
 
         LoadAssets();
+    }
+
+    [ClientRpc]
+    public static void InitClient()
+    {
+        Init();
+    }
+
+    [GameEvent.Server.ClientJoined]
+    private static void InitClient(ClientJoinedEvent joinedEvent)
+    {
+        InitClient(To.Single(joinedEvent.Client));
     }
 
     private static void LoadAssets()
     {
         IReadOnlyCollection<IItemAsset> assets = _assetProviders.SelectMany(provider => provider.Provide()).ToList()
             .AsReadOnly();
-        foreach (var assetModifier in _assetModifiers)
+        foreach (var asset in assets)
         {
-            assets = assetModifier.Modify(assets);
+            foreach (var assetModifier in _assetModifiers)
+            {
+                assetModifier.Modify(asset);
+            }
         }
+
+        assets = assets.Where(asset => _assetFilters.All(assetFilter => assetFilter.Filter(asset))).ToList();
 
         _assets = assets.GroupBy(asset => asset.Id).Select(group =>
         {
@@ -58,16 +83,25 @@ public static class InventorySystem
         }).ToList();
     }
 
-    public static IItem<TAsset> CreateItem<TAsset>(TAsset asset) where TAsset : class, IItemAsset
+    public static TItem CreateItem<TItem>(IItemAsset asset)
+        where TItem : IItem<IItemAsset, IEntity>
     {
-        Game.AssertServer();
-        return _itemProvider.Provide(asset);
+        asset.Verify();
+        var context = _itemContextProvider.Provide();
+        return TypeLibrary.Create<TItem>(asset.ItemType.TargetType, new object[] {asset, context});
     }
 
-    public static T GetAsset<T>(string id) where T : class, IItemAsset
+    public static T GetAsset<T>(string id) where T : IItemAsset
     {
-        var asset = Assets.First(asset => asset.Id == id);
-        if (!asset.GetType().IsAssignableTo(typeof(T))) return null;
-        return asset as T;
+        var asset = Assets.FirstOrDefault(asset => asset.Id == id);
+        if (asset == null) return default;
+        if (!asset.GetType().IsAssignableTo(typeof(T))) return default;
+        return (T) asset;
+    }
+
+    public static IItemContainer<TItem> CreateContainer<TItem>(IContainerSetting setting)
+        where TItem : IItem<IItemAsset, IEntity>
+    {
+        return _itemContainerProvider.Provide<TItem>(setting);
     }
 }

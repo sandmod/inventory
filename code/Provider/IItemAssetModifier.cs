@@ -5,5 +5,5 @@ namespace Sandmod.Inventory.Provider;
 
 public interface IItemAssetModifier
 {
-    IReadOnlyCollection<IItemAsset> Modify(IReadOnlyCollection<IItemAsset> assets);
+    void Modify(IItemAsset asset);
 }

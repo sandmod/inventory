@@ -5,9 +5,10 @@ using Sandmod.Inventory.Item.Asset;
 namespace Sandmod.Inventory.Provider;
 
 [DefaultProvider(ProviderPriority.Internal)]
-internal sealed class DefaultItemAssetModifier : IItemAssetModifier
+internal sealed class DefaultItemAssetFilter : IItemAssetFilter
 {
-    public void Modify(IItemAsset asset)
+    public bool Filter(IItemAsset asset)
     {
+        return true;
     }
 }

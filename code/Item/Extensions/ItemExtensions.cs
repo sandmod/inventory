@@ -1,44 +1,47 @@
 ﻿using System;
 using Sandbox;
+using Sandmod.Core.Util;
 using Sandmod.Inventory.Item.Asset;
+using Sandmod.Inventory.Item.Verify;
 
 namespace Sandmod.Inventory.Item;
 
 public static class ItemExtensions
 {
-    public static IItem<TAsset> CreateItem<TAsset>(this TAsset self) where TAsset : class, IItemAsset
+    public static IItem<IItemAsset, IEntity> CreateItem(this IItemAsset self)
     {
-        return InventorySystem.CreateItem(self);
+        return self.CreateItem<IItem<IItemAsset, IEntity>>();
     }
 
-    public static TEntity Spawn<TEntity, TAsset>(this IItem<TAsset> self, Vector3 position)
-        where TEntity : class, IEntity
-        where TAsset : IItemAsset
+    public static TItem CreateItem<TItem>(this IItemAsset self)
+        where TItem : IItem<IItemAsset, IEntity>
+    {
+        return InventorySystem.CreateItem<TItem>(self);
+    }
+
+    public static IEntity Spawn<TItem>(this TItem self,
+        Vector3 position)
+        where TItem : IItem<IItemAsset, IEntity>
     {
         Game.AssertServer();
-        var asset = self.Asset;
-        var type = asset.EntityType;
+        var type = self.EntityType;
         if (type == null)
         {
-            throw new Exception($"No entity type on item \"{asset.Id}\"");
+            throw new Exception($"No entity type on item type \"{self.GetType()}\" for item \"{self.Id}\"");
         }
 
-        var entityType = type.TargetType;
-        if (!entityType.IsAssignableTo(typeof(TEntity)))
+        self.Verify();
+
+        object[] constructorArgs = Array.Empty<object>();
+        if (GenericUtil.HasGenericInterface(type.TargetType, typeof(IItemEntity<>)))
         {
-            Log.Error($"Invalid entity type \"{type.FullName}\" on item \"{asset.Id}\"");
-            return null;
+            constructorArgs = new object[] {self};
         }
 
-        if (entityType.IsAssignableTo(typeof(IItemEntity<IItemAsset>)))
-            if (!entityType.IsAssignableTo(typeof(IItemEntity<TAsset>)))
-            {
-                Log.Error("Invalid item type");
-                return null;
-            }
-
-        var entity = TypeLibrary.Create<TEntity>(entityType, new object[] {self});
-        entity.Components.Add(new ItemComponent<TAsset>(self));
+        var entity = TypeLibrary.Create<IEntity>(type.TargetType, constructorArgs);
+        var component = new ItemComponent(self);
+        self.Parent = component;
+        entity.Components.Add(component);
         entity.Position = position;
         return entity;
     }

@@ -70,6 +70,25 @@ internal sealed class GameResourceItemAsset : GameResource
         {
             if (!property.CanWrite) continue;
             if (!json.TryGetProperty(property.Name, out JsonElement jsonValue)) continue;
+            if (type.TargetType == typeof(IItemAsset) && property.Name == "ItemType")
+            {
+                var itemName = jsonValue.GetString();
+                var itemType = TypeLibrary.GetType(itemName);
+                if (itemType == null)
+                {
+                    throw new Exception($"Item type {itemName} not found");
+                }
+
+                if (itemType.IsInterface || itemType.IsAbstract)
+                {
+                    throw new Exception($"Item type {itemType.FullName} is invalid");
+                }
+
+                Log.Info("set");
+                property.SetValue(instance, itemType);
+                continue;
+            }
+
             var value = jsonValue.Deserialize(property.PropertyType, Options);
             property.SetValue(instance, value);
         }

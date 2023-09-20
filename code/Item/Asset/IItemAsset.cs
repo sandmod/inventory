@@ -9,5 +9,5 @@ public interface IItemAsset
 
     string Name { get; set; }
 
-    TypeDescription EntityType { get; }
+    TypeDescription ItemType { get; set; }
 }

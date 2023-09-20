@@ -1,18 +1,25 @@
 ﻿using Sandbox;
 using Sandmod.Inventory.Item.Asset;
+using Sandmod.Inventory.Network;
 
 namespace Sandmod.Inventory.Item;
 
-internal sealed partial class ItemComponent<TAsset> : EntityComponent, IItemComponent<TAsset> where TAsset : IItemAsset
+internal sealed partial class ItemComponent : EntityComponent,
+    IItemComponent
 {
-    [Net] public IItem<TAsset> Item { get; private set; }
+    [Net] private NetItem NetItem { get; set; }
+
+    public new IEntity Entity => base.Entity;
+
+    public IItem<IItemAsset, IEntity> Item => NetItem.Item;
 
     public ItemComponent()
     {
     }
 
-    public ItemComponent(IItem<TAsset> item)
+    public ItemComponent(IItem<IItemAsset, IEntity> item)
     {
-        Item = item;
+        Game.AssertServer();
+        NetItem = new NetItem(item);
     }
 }

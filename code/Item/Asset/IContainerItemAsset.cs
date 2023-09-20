@@ -1,5 +1,9 @@
-﻿namespace Sandmod.Inventory.Item.Asset;
+﻿using System.Collections.Generic;
+using Sandmod.Inventory.Container;
 
-public interface IContainerItemAsset
+namespace Sandmod.Inventory.Item.Asset;
+
+public interface IContainerItemAsset : IItemAsset
 {
+    IReadOnlyCollection<IContainerSetting> ContainerSettings { get; set; }
 }

@@ -3,7 +3,8 @@ using Sandmod.Inventory.Item.Asset;
 
 namespace Sandmod.Inventory.Item;
 
-public interface IItemEntity<out TAsset> : IEntity where TAsset : IItemAsset
+public interface IItemEntity<out TItem> : IEntity
+    where TItem : IItem<IItemAsset, IEntity>
 {
-    IItem<TAsset> Item => Components.Get<IItemComponent<TAsset>>().Item;
+    TItem Item => Components.Get<IItemComponent>().GetItem<TItem>();
 }
