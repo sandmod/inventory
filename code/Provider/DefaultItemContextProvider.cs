@@ -1,7 +1,4 @@
-﻿using Sandbox;
-using Sandmod.Core.Provider;
-using Sandmod.Inventory.Item;
-using Sandmod.Inventory.Item.Asset;
+﻿using Sandmod.Core.Provider;
 using Sandmod.Inventory.Item.Context;
 
 namespace Sandmod.Inventory.Provider;

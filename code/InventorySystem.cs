@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Sandbox;
 using Sandbox.Diagnostics;
@@ -8,7 +7,6 @@ using Sandmod.Core.Provider;
 using Sandmod.Inventory.Container;
 using Sandmod.Inventory.Item;
 using Sandmod.Inventory.Item.Asset;
-using Sandmod.Inventory.Item.Context;
 using Sandmod.Inventory.Item.Verify;
 using Sandmod.Inventory.Provider;
 

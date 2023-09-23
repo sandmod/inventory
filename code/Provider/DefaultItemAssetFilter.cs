@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Sandmod.Core.Provider;
+﻿using Sandmod.Core.Provider;
 using Sandmod.Inventory.Item.Asset;
 
 namespace Sandmod.Inventory.Provider;

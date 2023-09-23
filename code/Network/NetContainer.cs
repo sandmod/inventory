@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Sandbox;
+using Sandmod.Core.Network;
 using Sandmod.Inventory.Container;
 using Sandmod.Inventory.Item;
 using Sandmod.Inventory.Item.Asset;
@@ -38,7 +39,7 @@ public sealed class NetContainer : BaseNetworkable, INetworkSerializer
     public static void WriteContainer(BinaryWriter writer, IItemContainer<IItem<IItemAsset, IEntity>> container)
     {
         writer.Write(container.NetworkIdent);
-        writer.Write(container.GetType().FullName);
+        writer.Write(container.GetType());
 
         using var stream = new MemoryStream();
         using var containerWriter = new BinaryWriter(stream);
@@ -51,7 +52,8 @@ public sealed class NetContainer : BaseNetworkable, INetworkSerializer
     public static IItemContainer<IItem<IItemAsset, IEntity>> ReadContainer(BinaryReader reader)
     {
         var networkIdent = reader.ReadUInt64();
-        var typeName = reader.ReadString();
+        var type = reader.ReadType();
+
         IItemContainer<IItem<IItemAsset, IEntity>> container;
         if (Containers.TryGetValue(networkIdent, out var foundContainer))
         {
@@ -59,8 +61,7 @@ public sealed class NetContainer : BaseNetworkable, INetworkSerializer
         }
         else
         {
-            var type = TypeLibrary.GetType(typeName);
-            var createdContainer = TypeLibrary.Create<IItemContainer<IItem<IItemAsset, IEntity>>>(type.TargetType);
+            var createdContainer = TypeLibrary.Create<IItemContainer<IItem<IItemAsset, IEntity>>>(type);
             createdContainer.NetworkIdent = networkIdent;
             InternalContainers.Add(createdContainer.NetworkIdent, createdContainer);
             container = createdContainer;
@@ -75,6 +76,8 @@ public sealed class NetContainer : BaseNetworkable, INetworkSerializer
     }
 
     public IItemContainer<IItem<IItemAsset, IEntity>> Container { get; private set; }
+
+    private uint Version;
 
     public NetContainer()
     {
@@ -95,9 +98,12 @@ public sealed class NetContainer : BaseNetworkable, INetworkSerializer
 
     public void Write(NetWrite write)
     {
+        write.Write(++Version);
+
         using var stream = new MemoryStream();
         using var writer = new BinaryWriter(stream);
         WriteContainer(writer, Container);
+
         var data = stream.ToArray();
         write.Write(data.Length);
         write.Write(data);
@@ -105,11 +111,24 @@ public sealed class NetContainer : BaseNetworkable, INetworkSerializer
 
     public void Read(ref NetRead read)
     {
-        var totalBytes = read.Read<int>();
-        var data = new byte[totalBytes];
-        read.ReadUnmanagedArray(data);
-        using var stream = new MemoryStream(data);
-        using var reader = new BinaryReader(stream);
-        Container = ReadContainer(reader);
+        try
+        {
+            var version = read.Read<uint>();
+
+            var totalBytes = read.Read<int>();
+            var data = new byte[totalBytes];
+            read.ReadUnmanagedArray(data);
+
+            if (version == Version) return;
+            Version = version;
+
+            using var stream = new MemoryStream(data);
+            using var reader = new BinaryReader(stream);
+            Container = ReadContainer(reader);
+        }
+        catch (Exception e)
+        {
+            Log.Warning(e.Message);
+        }
     }
 }

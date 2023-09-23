@@ -1,14 +1,16 @@
 ﻿#nullable enable
 using System.IO;
+using Sandbox;
 using Sandmod.Core.Network;
 
 namespace Sandmod.Inventory.Item.Context;
 
 public class ItemContext : IItemContext
 {
-    public ulong  NetworkIdent { get; set; }
-    
+    public ulong NetworkIdent { get; set; }
+
     private bool _internalIsDirty;
+
     public bool IsDirty
     {
         get => _internalIsDirty;

@@ -10,7 +10,7 @@ using Sandmod.Inventory.Network;
 
 namespace Sandmod.Inventory.Item;
 
-public partial class Item<TAsset, TEntity> : IItem<TAsset, TEntity>
+public class Item<TAsset, TEntity> : IItem<TAsset, TEntity>
     where TAsset : IItemAsset where TEntity : class, IEntity
 {
     public TAsset Asset { get; }

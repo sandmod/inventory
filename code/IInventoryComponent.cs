@@ -3,7 +3,6 @@ using Sandbox;
 using Sandmod.Inventory.Container;
 using Sandmod.Inventory.Item;
 using Sandmod.Inventory.Item.Asset;
-using Sandmod.Inventory.Item.Types;
 
 namespace Sandmod.Inventory;
 

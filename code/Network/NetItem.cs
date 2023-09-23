@@ -73,6 +73,8 @@ public sealed class NetItem : BaseNetworkable, INetworkSerializer
 
     public IItem<IItemAsset, IEntity> Item { get; private set; }
 
+    private uint Version;
+
     public NetItem()
     {
     }
@@ -92,9 +94,12 @@ public sealed class NetItem : BaseNetworkable, INetworkSerializer
 
     public void Write(NetWrite write)
     {
+        write.Write(++Version);
+
         using var stream = new MemoryStream();
         using var writer = new BinaryWriter(stream);
         WriteItem(writer, Item);
+
         var data = stream.ToArray();
         write.Write(data.Length);
         write.Write(data);
@@ -102,9 +107,15 @@ public sealed class NetItem : BaseNetworkable, INetworkSerializer
 
     public void Read(ref NetRead read)
     {
+        var version = read.Read<uint>();
+
         var totalBytes = read.Read<int>();
         var data = new byte[totalBytes];
         read.ReadUnmanagedArray(data);
+
+        if (version == Version) return;
+        Version = version;
+
         using var stream = new MemoryStream(data);
         using var reader = new BinaryReader(stream);
         Item = ReadItem(reader);

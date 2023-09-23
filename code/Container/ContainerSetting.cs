@@ -1,6 +1,4 @@
-﻿using Sandmod.Inventory.Item.Asset;
-
-namespace Sandmod.Inventory.Container;
+﻿namespace Sandmod.Inventory.Container;
 
 public class ContainerSetting : IContainerSetting
 {

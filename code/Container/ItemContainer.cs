@@ -1,7 +1,5 @@
 ﻿#nullable enable
-using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using Sandbox;
@@ -68,6 +66,7 @@ public class ItemContainer<TItem> : IItemContainer<TItem> where TItem : IItem<II
         var allowed = CanAdd(item);
         if (!allowed) return false;
         InternalItems.Add(item);
+        IsDirty = true;
         return true;
     }
 
@@ -81,6 +80,7 @@ public class ItemContainer<TItem> : IItemContainer<TItem> where TItem : IItem<II
         var allowed = CanRemove(item);
         if (!allowed) return false;
         InternalItems.Remove(item);
+        IsDirty = true;
         return true;
     }
 

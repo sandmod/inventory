@@ -10,15 +10,24 @@ namespace Sandmod.Inventory;
 
 public partial class InventoryComponent : EntityComponent, IInventoryComponent
 {
-    [Net]
-    protected List<NetContainer> NetContainers { get; set; } = new()
-        {new NetContainer(InventorySystem.CreateContainer<IItem<IItemAsset, IEntity>>(new ContainerSetting(5)))};
+    [Net, Local] protected List<NetContainer> NetContainers { get; set; }
 
     public IReadOnlyCollection<IItemContainer<IItem<IItemAsset, IEntity>>> Containers =>
         NetContainers.Select(netContainer => netContainer.Container).ToList();
 
     public IReadOnlyCollection<IItem<IItemAsset, IEntity>> Items =>
         Containers.SelectMany(container => container.Items).ToList();
+
+    public InventoryComponent()
+    {
+        if (Game.IsServer)
+        {
+            NetContainers = new List<NetContainer>
+            {
+                new NetContainer(InventorySystem.CreateContainer<IItem<IItemAsset, IEntity>>(new ContainerSetting(5)))
+            };
+        }
+    }
 
     public bool CanAdd(IItem<IItemAsset, IEntity> item)
     {
