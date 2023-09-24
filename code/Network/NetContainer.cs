@@ -111,24 +111,17 @@ public sealed class NetContainer : BaseNetworkable, INetworkSerializer
 
     public void Read(ref NetRead read)
     {
-        try
-        {
-            var version = read.Read<uint>();
+        var version = read.Read<uint>();
 
-            var totalBytes = read.Read<int>();
-            var data = new byte[totalBytes];
-            read.ReadUnmanagedArray(data);
+        var totalBytes = read.Read<int>();
+        var data = new byte[totalBytes];
+        read.ReadUnmanagedArray(data);
 
-            if (version == Version) return;
-            Version = version;
+        if (version == Version) return;
+        Version = version;
 
-            using var stream = new MemoryStream(data);
-            using var reader = new BinaryReader(stream);
-            Container = ReadContainer(reader);
-        }
-        catch (Exception e)
-        {
-            Log.Warning(e.Message);
-        }
+        using var stream = new MemoryStream(data);
+        using var reader = new BinaryReader(stream);
+        Container = ReadContainer(reader);
     }
 }
