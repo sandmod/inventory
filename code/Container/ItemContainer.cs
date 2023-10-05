@@ -56,30 +56,30 @@ public class ItemContainer<TItem> : IItemContainer<TItem> where TItem : IItem<II
         _internalSize = size;
     }
 
-    public virtual bool CanAdd(TItem item)
+    public virtual bool CanAdd(IItem<IItemAsset, IEntity> item)
     {
         return Items.Count < Size && item.GetType().IsAssignableTo(typeof(TItem));
     }
 
-    public virtual bool TryAdd(TItem item)
+    public virtual bool TryAdd(IItem<IItemAsset, IEntity> item)
     {
         var allowed = CanAdd(item);
         if (!allowed) return false;
-        InternalItems.Add(item);
+        InternalItems.Add((TItem) item);
         IsDirty = true;
         return true;
     }
 
-    public virtual bool CanRemove(TItem item)
+    public virtual bool CanRemove(IItem<IItemAsset, IEntity> item)
     {
-        return Items.Contains(item);
+        return item.GetType().IsAssignableTo(typeof(TItem)) && Items.Contains((TItem) item);
     }
 
-    public virtual bool TryRemove(TItem item)
+    public virtual bool TryRemove(IItem<IItemAsset, IEntity> item)
     {
         var allowed = CanRemove(item);
         if (!allowed) return false;
-        InternalItems.Remove(item);
+        InternalItems.Remove((TItem) item);
         IsDirty = true;
         return true;
     }

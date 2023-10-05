@@ -8,33 +8,44 @@ public static class ItemTypeExtensions
 {
     public static bool IsClothing(this IItem<IItemAsset, IEntity> self)
     {
-        return self.GetType().IsAssignableTo(typeof(IClothingItem<,>));
+        return self.GetType().IsAssignableTo(typeof(IClothing));
     }
 
-    public static IClothingItem<IItemAsset, IEntity> AsClothing(this IItem<IItemAsset, IEntity> self)
+    public static IClothing AsClothing(this IItem<IItemAsset, IEntity> self)
     {
-        return self as IClothingItem<IItemAsset, IEntity>;
+        return self as IClothing;
     }
 
     public static bool IsContainer(this IItem<IItemAsset, IEntity> self)
     {
-        return self.GetType().IsAssignableTo(typeof(IContainerItem<,,>));
+        return self.GetType().IsAssignableTo(typeof(IContainer<>));
     }
 
-    public static IContainerItem<IItemAsset, IEntity, IItem<IItemAsset, IEntity>> AsContainer(
+    public static IContainer<IItem<IItemAsset, IEntity>> AsContainer(
         this IItem<IItemAsset, IEntity> self)
     {
-        return self as IContainerItem<IItemAsset, IEntity, IItem<IItemAsset, IEntity>>;
+        return self as IContainer<IItem<IItemAsset, IEntity>>;
     }
 
     public static bool IsEquippable(this IItem<IItemAsset, IEntity> self)
     {
-        return self.GetType().IsAssignableTo(typeof(IEquippableItem<,>));
+        return self.GetType().IsAssignableTo(typeof(IEquippable));
     }
 
-    public static IEquippableItem<IItemAsset, IEntity> AsEquippable(
+    public static IEquippable AsEquippable(
         this IItem<IItemAsset, IEntity> self)
     {
-        return self as IEquippableItem<IItemAsset, IEntity>;
+        return self as IEquippable;
+    }
+
+    public static bool IsHoldable(this IItem<IItemAsset, IEntity> self)
+    {
+        return self.GetType().IsAssignableTo(typeof(IHoldable));
+    }
+
+    public static IHoldable AsHoldable(
+        this IItem<IItemAsset, IEntity> self)
+    {
+        return self as IHoldable;
     }
 }

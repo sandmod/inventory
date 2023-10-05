@@ -13,11 +13,11 @@ public interface IItemContainer<TItem> : IItemParent, INetworkSerializable
 
     int Size { get; }
 
-    bool CanAdd(TItem item);
+    bool CanAdd(IItem<IItemAsset, IEntity> item);
 
-    bool TryAdd(TItem item);
+    bool TryAdd(IItem<IItemAsset, IEntity> item);
 
-    bool CanRemove(TItem item);
+    bool CanRemove(IItem<IItemAsset, IEntity> item);
 
-    bool TryRemove(TItem item);
+    bool TryRemove(IItem<IItemAsset, IEntity> item);
 }
