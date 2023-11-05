@@ -7,6 +7,4 @@ public interface IItemAsset
     string Id { get; set; }
 
     string Name { get; set; }
-
-    TypeDescription ItemType { get; set; }
 }

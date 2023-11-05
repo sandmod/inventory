@@ -4,54 +4,51 @@ using System.IO;
 using Sandbox;
 using Sandmod.Core.Network;
 using Sandmod.Inventory.Item.Asset;
-using Sandmod.Inventory.Item.Context;
-using Sandmod.Inventory.Item.Extensions;
+using Sandmod.Inventory.Item.Component;
 using Sandmod.Inventory.Network;
 
 namespace Sandmod.Inventory.Item;
 
-public class Item<TAsset, TEntity> : IItem<TAsset, TEntity>
-    where TAsset : IItemAsset where TEntity : class, IEntity
+public class Item : IItem
 {
-    public TAsset Asset { get; }
+    public IItemAsset Asset { get; }
 
-    public IItemContext Context { get; }
     public IItemParent Parent { get; set; }
-    public virtual TypeDescription? EntityType => null;
+
+    public IItemComponentSystem Components { get; }
 
     public ulong NetworkIdent { get; set; }
 
-    private bool _internalIsDirty;
+    protected bool InternalIsDirty;
 
-    public bool IsDirty
+    public virtual bool IsDirty
     {
-        get => _internalIsDirty;
+        get => InternalIsDirty;
         set
         {
-            _internalIsDirty = value;
-            if (_internalIsDirty)
+            InternalIsDirty = value;
+            if (InternalIsDirty)
             {
                 OnMarkedDirty?.Invoke();
             }
             else
             {
-                Context.IsDirty = false;
+                Components.IsDirty = false;
             }
         }
     }
 
     public event INetworkSerializable.MarkedDirty? OnMarkedDirty;
 
-    public Item(TAsset asset, IItemContext context)
+    public Item(IItemAsset asset)
     {
+        Components = new ItemComponentSystem(this);
         Asset = asset;
-        Context = context;
-        context.OnMarkedDirty += () => IsDirty = true;
     }
 
     public virtual void NetWrite(BinaryWriter writer)
     {
-        if (Parent.IsContainer)
+        if (Parent.IsContainer())
         {
             writer.Write(true);
             writer.Write(Parent.AsContainer().NetworkIdent);
@@ -62,7 +59,7 @@ public class Item<TAsset, TEntity> : IItem<TAsset, TEntity>
             writer.Write(Parent.AsEntity().NetworkIdent);
         }
 
-        Context.NetWrite(writer);
+        Components.NetWrite(writer);
     }
 
     public virtual void NetRead(BinaryReader reader)
@@ -71,7 +68,7 @@ public class Item<TAsset, TEntity> : IItem<TAsset, TEntity>
         if (isContainerParent)
         {
             var networkIdent = reader.ReadUInt64();
-            if (NetContainer.Containers.TryGetValue(networkIdent, out var container))
+            if (NetContainer.Registry.TryGetValue(networkIdent, out var container))
             {
                 Parent = container;
             }
@@ -84,9 +81,9 @@ public class Item<TAsset, TEntity> : IItem<TAsset, TEntity>
         {
             var networkIdent = reader.ReadInt32();
             var entity = Entity.FindByIndex(networkIdent);
-            Parent = entity.Components.Get<IItemComponent>();
+            Parent = entity.Components.Get<IItemParentComponent>();
         }
 
-        Context.NetRead(reader);
+        Components.NetRead(reader);
     }
 }

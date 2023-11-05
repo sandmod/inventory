@@ -1,47 +1,33 @@
-﻿using System;
-using Sandbox;
-using Sandmod.Core.Util;
+﻿using Sandbox;
 using Sandmod.Inventory.Item.Asset;
-using Sandmod.Inventory.Item.Verify;
 
 namespace Sandmod.Inventory.Item;
 
 public static class ItemExtensions
 {
-    public static IItem<IItemAsset, IEntity> CreateItem(this IItemAsset self)
+    public static string Id(this IItem self)
     {
-        return self.CreateItem<IItem<IItemAsset, IEntity>>();
+        return self.Asset.Id;
     }
 
-    public static TItem CreateItem<TItem>(this IItemAsset self)
-        where TItem : IItem<IItemAsset, IEntity>
+    public static string Name(this IItem self)
     {
-        return InventorySystem.CreateItem<TItem>(self);
+        return self.Asset.Name;
     }
 
-    public static IEntity Spawn<TItem>(this TItem self,
-        Vector3 position)
-        where TItem : IItem<IItemAsset, IEntity>
+    public static IItem CreateItem(this IItemAsset self)
     {
-        Game.AssertServer();
-        var type = self.EntityType;
-        if (type == null)
-        {
-            throw new Exception($"No entity type on item type \"{self.GetType()}\" for item \"{self.Id}\"");
-        }
+        return InventorySystem.CreateItem(self);
+    }
 
-        self.Verify();
+    public static IEntity Spawn(this IItem self)
+    {
+        return InventorySystem.SpawnItem(self);
+    }
 
-        object[] constructorArgs = Array.Empty<object>();
-        if (GenericUtil.HasGenericInterface(type.TargetType, typeof(IItemEntity<>)))
-        {
-            constructorArgs = new object[] {self};
-        }
-
-        var entity = TypeLibrary.Create<IEntity>(type.TargetType, constructorArgs);
-        var component = new ItemComponent(self);
-        self.Parent = component;
-        entity.Components.Add(component);
+    public static IEntity Spawn(this IItem self, Vector3 position)
+    {
+        var entity = self.Spawn();
         entity.Position = position;
         return entity;
     }

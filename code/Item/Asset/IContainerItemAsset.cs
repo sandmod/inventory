@@ -5,5 +5,5 @@ namespace Sandmod.Inventory.Item.Asset;
 
 public interface IContainerItemAsset : IItemAsset
 {
-    IReadOnlyCollection<IContainerSetting> ContainerSettings { get; set; }
+    IReadOnlyCollection<IContainerSettings> ContainerSettings { get; set; }
 }

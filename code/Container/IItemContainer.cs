@@ -1,23 +1,20 @@
 ﻿using System.Collections.Generic;
-using Sandbox;
 using Sandmod.Core.Network;
 using Sandmod.Inventory.Item;
-using Sandmod.Inventory.Item.Asset;
 
 namespace Sandmod.Inventory.Container;
 
-public interface IItemContainer<TItem> : IItemParent, INetworkSerializable
-    where TItem : IItem<IItemAsset, IEntity>
+public interface IItemContainer : IItemParent, INetworkSerializable
 {
-    IReadOnlyCollection<TItem> Items { get; }
+    IReadOnlyCollection<IItem> Items { get; }
 
-    int Size { get; }
+    IContainerSettings Settings { get; }
 
-    bool CanAdd(IItem<IItemAsset, IEntity> item);
+    bool CanAdd(IItem item);
 
-    bool TryAdd(IItem<IItemAsset, IEntity> item);
+    bool TryAdd(IItem item);
 
-    bool CanRemove(IItem<IItemAsset, IEntity> item);
+    bool CanRemove(IItem item);
 
-    bool TryRemove(IItem<IItemAsset, IEntity> item);
+    bool TryRemove(IItem item);
 }

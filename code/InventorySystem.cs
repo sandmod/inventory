@@ -4,10 +4,9 @@ using Sandbox;
 using Sandbox.Diagnostics;
 using Sandmod.Core.Logger;
 using Sandmod.Core.Provider;
-using Sandmod.Inventory.Container;
 using Sandmod.Inventory.Item;
 using Sandmod.Inventory.Item.Asset;
-using Sandmod.Inventory.Item.Verify;
+using Sandmod.Inventory.Item.Component;
 using Sandmod.Inventory.Provider;
 
 namespace Sandmod.Inventory;
@@ -23,9 +22,9 @@ public static partial class InventorySystem
 
     public static IReadOnlyCollection<IItemAsset> Assets => _assets.AsReadOnly();
 
-    private static IItemContextProvider _itemContextProvider;
-
-    private static IItemContainerProvider _itemContainerProvider;
+    private static IItemProvider _itemProvider;
+    private static List<IItemComponentProvider> _itemComponentProviders = new();
+    private static IItemEntityProvider _itemEntityProvider;
 
     [GameEvent.Entity.PostSpawn]
     [Event.Hotload]
@@ -35,9 +34,9 @@ public static partial class InventorySystem
         _assetModifiers = new List<IItemAssetModifier>(ProviderFactory.Provide<IItemAssetModifier>());
         _assetFilters = new List<IItemAssetFilter>(ProviderFactory.Provide<IItemAssetFilter>());
 
-        _itemContextProvider = ProviderFactory.ProvideSingle<IItemContextProvider>();
-
-        _itemContainerProvider = ProviderFactory.ProvideSingle<IItemContainerProvider>();
+        _itemProvider = ProviderFactory.ProvideSingle<IItemProvider>();
+        _itemComponentProviders = new List<IItemComponentProvider>(ProviderFactory.Provide<IItemComponentProvider>());
+        _itemEntityProvider = ProviderFactory.ProvideSingle<IItemEntityProvider>();
 
         LoadAssets();
     }
@@ -45,6 +44,7 @@ public static partial class InventorySystem
     [ClientRpc]
     public static void InitClient()
     {
+        if (!Game.IsClient) return;
         Init();
     }
 
@@ -81,14 +81,6 @@ public static partial class InventorySystem
         }).ToList();
     }
 
-    public static TItem CreateItem<TItem>(IItemAsset asset)
-        where TItem : IItem<IItemAsset, IEntity>
-    {
-        asset.Verify();
-        var context = _itemContextProvider.Provide();
-        return TypeLibrary.Create<TItem>(asset.ItemType.TargetType, new object[] {asset, context});
-    }
-
     public static T GetAsset<T>(string id) where T : IItemAsset
     {
         var asset = Assets.FirstOrDefault(asset => asset.Id == id);
@@ -97,9 +89,19 @@ public static partial class InventorySystem
         return (T) asset;
     }
 
-    public static IItemContainer<TItem> CreateContainer<TItem>(IContainerSetting setting)
-        where TItem : IItem<IItemAsset, IEntity>
+    public static IItem CreateItem(IItemAsset asset)
     {
-        return _itemContainerProvider.Provide<TItem>(setting);
+        return _itemProvider.Provide(asset);
+    }
+
+    public static IReadOnlyCollection<IItemComponent> ProvideItemComponents(IItemAsset asset)
+    {
+        return _itemComponentProviders.SelectMany(provider => provider.Provide(asset)).ToList();
+    }
+
+    public static IEntity SpawnItem(IItem item)
+    {
+        Game.AssertServer();
+        return _itemEntityProvider.Provide(item);
     }
 }
